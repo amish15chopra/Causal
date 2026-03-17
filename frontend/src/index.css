@@ -1,4 +1,34 @@
-/* Global resets and simple defaults */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Colors - Sophisticated Deep Palette (Perplexity Style) */
+  --bg-primary: #191A1A;
+  --bg-secondary: #202222;
+  --bg-tertiary: #2A2C2C;
+  
+  --text-primary: #E8E8E6;
+  --text-secondary: #B4B5B6;
+  --text-muted: #828384;
+  
+  --accent: #22d3ee; /* cyan tint for accent if needed, otherwise subtle */
+  --accent-hover: #67e8f9;
+  --accent-soft: rgba(34, 211, 238, 0.1);
+  
+  --success: #4ade80;
+  --warning: #facc15;
+  --danger: #f87171;
+  
+  --border-light: #2A2C2C;
+  --border-heavy: #3E3F40;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+  --shadow-lg: 0 4px 6px -2px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,8 +36,64 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+textarea, input {
+  font-family: var(--font-sans);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+textarea:focus, input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
 }

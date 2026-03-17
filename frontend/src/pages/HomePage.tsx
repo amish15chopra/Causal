@@ -15,7 +15,7 @@ export const HomePage: React.FC = () => {
       try {
         const response = await axios.get<HealthResponse>('http://localhost:3001/health');
         setHealth(response.data);
-      } catch (err) {
+      } catch {
         setError('❌ Backend disconnected');
       }
     };

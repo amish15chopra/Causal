@@ -1,100 +1,99 @@
 import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 import type { NodeProps } from 'reactflow';
+import { ExternalLink } from 'lucide-react';
 
 interface Source {
   title: string;
   url: string;
 }
 
-/**
- * Premium custom node for Causal Topology.
- * Features probability badges, reasoning tooltips (simplified for now), and hyperlinked citations.
- */
+const NODE_TYPE_LABELS: Record<string, string> = {
+  macro_event: 'Trigger Event',
+  first_order_effect: 'First Order',
+  second_order_effect: 'Second Order',
+};
+
 const CausalNode = ({ data }: NodeProps) => {
   const { label, probability, reasoning, nodeType, sources } = data;
 
-  const getBackgroundColor = () => {
-    switch (nodeType) {
-      case 'macro_event': return '#0f172a';
-      case 'first_order_effect': return '#ffffff';
-      case 'second_order_effect': return '#ffffff';
-      default: return '#ffffff';
-    }
-  };
-
-  const getTextColor = () => {
-    return nodeType === 'macro_event' ? '#f8fafc' : '#1e293b';
-  };
+  const isTrigger = nodeType === 'macro_event';
+  const probPct = Math.round((probability || 0) * 100);
 
   return (
     <div style={{
-      padding: '16px',
-      borderRadius: '12px',
-      backgroundColor: getBackgroundColor(),
-      color: getTextColor(),
-      border: nodeType === 'macro_event' ? 'none' : '1px solid #e2e8f0',
-      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-      width: '280px',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      transition: 'all 0.2s ease',
-      position: 'relative'
+      padding: '16px 20px',
+      borderRadius: '10px',
+      backgroundColor: 'var(--bg-secondary)',
+      color: 'var(--text-primary)',
+      border: isTrigger ? '1px solid var(--border-heavy)' : '1px solid var(--border-light)',
+      width: '300px',
+      fontFamily: 'var(--font-sans)',
+      position: 'relative',
     }}>
-      <Handle type="target" position={Position.Top} style={{ background: '#94a3b8' }} />
-      
-      {/* Probability Badge */}
-      {probability < 1 && (
-        <div style={{
-          position: 'absolute',
-          top: '-10px',
-          right: '10px',
-          padding: '2px 8px',
-          borderRadius: '999px',
-          fontSize: '0.65rem',
-          fontWeight: 800,
-          backgroundColor: probability >= 0.8 ? '#dcfce7' : (probability >= 0.6 ? '#fef9c3' : '#fee2e2'),
-          color: probability >= 0.8 ? '#166534' : (probability >= 0.6 ? '#854d0e' : '#991b1b'),
-          border: '1px solid rgba(0,0,0,0.05)',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-        }}>
-          {Math.round(probability * 100)}% CONFIDENCE
-        </div>
-      )}
+      {/* Top handle */}
+      <Handle type="target" position={Position.Top} style={{ background: 'var(--border-heavy)', width: '6px', height: '6px', border: 'none', borderRadius: '50%' }} />
 
-      {/* Main Label */}
-      <div style={{ 
-        fontSize: '0.95rem', 
-        fontWeight: 600, 
-        lineHeight: 1.4,
-        marginBottom: '8px' 
+      {/* Type badge + confidence */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <span style={{
+          fontSize: '0.65rem',
+          fontWeight: 600,
+          color: isTrigger ? 'var(--text-primary)' : 'var(--text-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          backgroundColor: isTrigger ? 'var(--bg-tertiary)' : 'transparent',
+          padding: isTrigger ? '2px 6px' : '0',
+          borderRadius: '4px',
+        }}>
+          {NODE_TYPE_LABELS[nodeType] ?? nodeType.replace(/_/g, ' ')}
+        </span>
+
+        {probability < 1 && (
+          <span style={{
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            color: probPct >= 80 ? 'var(--success)' : 'var(--warning)',
+            fontFamily: 'var(--font-mono)',
+          }}>
+            {probPct}%
+          </span>
+        )}
+      </div>
+
+      {/* Label */}
+      <div style={{
+        fontSize: '0.95rem',
+        fontWeight: 600,
+        lineHeight: 1.45,
+        color: 'var(--text-primary)',
+        marginBottom: reasoning && reasoning !== 'Triggering Event' ? '10px' : '0',
       }}>
         {label}
       </div>
 
-      {/* Reasoning (Subtle) */}
+      {/* Reasoning */}
       {reasoning && reasoning !== 'Triggering Event' && (
-        <div style={{ 
-          fontSize: '0.75rem', 
-          color: nodeType === 'macro_event' ? '#94a3b8' : '#64748b',
-          lineHeight: 1.5,
-          fontStyle: 'italic',
-          borderTop: '1px solid ' + (nodeType === 'macro_event' ? '#1e293b' : '#f1f5f9'),
-          paddingTop: '8px',
-          marginTop: '8px'
+        <p style={{
+          fontSize: '0.8rem',
+          color: 'var(--text-secondary)',
+          lineHeight: 1.55,
+          margin: 0,
+          marginBottom: sources && sources.length > 0 ? '12px' : '0',
         }}>
           {reasoning}
-        </div>
+        </p>
       )}
 
-      {/* Citations / Sources */}
+      {/* Sources */}
       {sources && sources.length > 0 && (
         <div style={{
           marginTop: '12px',
-          paddingTop: '8px',
-          borderTop: '1px dashed ' + (nodeType === 'macro_event' ? '#1e293b' : '#e2e8f0'),
+          paddingTop: '10px',
+          borderTop: '1px solid var(--border-light)',
           display: 'flex',
-          flexWrap: 'wrap',
-          gap: '6px'
+          flexWrap: 'wrap' as const,
+          gap: '6px',
         }}>
           {sources.map((source: Source, idx: number) => (
             <a
@@ -102,33 +101,40 @@ const CausalNode = ({ data }: NodeProps) => {
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()} // Prevent node expansion when clicking source
+              onClick={(e) => e.stopPropagation()}
               style={{
-                fontSize: '0.65rem',
-                color: nodeType === 'macro_event' ? '#3b82f6' : '#2563eb',
+                fontSize: '0.72rem',
+                color: 'var(--text-secondary)',
                 textDecoration: 'none',
-                backgroundColor: nodeType === 'macro_event' ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff',
-                padding: '2px 6px',
-                borderRadius: '4px',
+                backgroundColor: 'var(--bg-tertiary)',
+                padding: '3px 8px',
+                borderRadius: '5px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '2px',
-                border: '1px solid transparent',
-                transition: 'border-color 0.2s'
+                gap: '5px',
+                border: '1px solid var(--border-light)',
+                transition: 'all 0.15s',
               }}
-              onMouseOver={(e) => (e.currentTarget.style.borderColor = '#3b82f6')}
-              onMouseOut={(e) => (e.currentTarget.style.borderColor = 'transparent')}
+              onMouseOver={(e) => {
+                e.currentTarget.style.color = 'var(--text-primary)';
+                e.currentTarget.style.borderColor = 'var(--border-heavy)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.color = 'var(--text-secondary)';
+                e.currentTarget.style.borderColor = 'var(--border-light)';
+              }}
             >
-              <span>🔗</span>
-              <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {source.title}
               </span>
+              <ExternalLink size={10} />
             </a>
           ))}
         </div>
       )}
 
-      <Handle type="source" position={Position.Bottom} style={{ background: '#94a3b8' }} />
+      {/* Bottom handle */}
+      <Handle type="source" position={Position.Bottom} style={{ background: 'var(--border-heavy)', width: '6px', height: '6px', border: 'none', borderRadius: '50%' }} />
     </div>
   );
 };

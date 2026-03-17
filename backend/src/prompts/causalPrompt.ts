@@ -2,7 +2,8 @@ export const CAUSAL_SYSTEM_PROMPT = `You are an expert causal reasoning agent fo
 
 export const CAUSAL_USER_PROMPT_TEMPLATE = `Event: {event}
 {searchContext}
-Please analyze this macro event and break it down into causal chains.
+Please analyze this macro event and identify its DIRECT (first-order) consequences.
+Focus only on immediate effects that happen as a direct result of the event.
 Output JSON strictly in the following format:
 {
   "firstOrder": [
@@ -14,31 +15,31 @@ Output JSON strictly in the following format:
         { "title": "Actual Source Name from Context", "url": "https://actual-source-url.com" }
       ]
     }
-  ],
-  "secondOrder": [
-    {
-      "text": "description of secondary effect resulting from first order effect",
-      "confidence": 0.65,
-      "reasoning": "1-2 sentence reasoning",
-      "sources": []
-    }
   ]
 }
+RULES:
+1. Generate 3-5 distinct first-order effects.
+2. Ensure they cover different dimensions (e.g., economic, social, geopolitical, supply chain).
 No markdown wrappers, no introductory text. Pure JSON object only.`;
 
-export const EXPAND_NODE_USER_PROMPT_TEMPLATE = `Current Macro State: {nodeText}
+export const EXPAND_NODE_USER_PROMPT_TEMPLATE = `### CAUSAL CONTEXT
+1. GLOBAL EVENT: {rootEvent}
+2. SPECIFIC BRANCH: {nodeText}
 
-What happens next as a DIRECT result of this state? 
-Output exactly 1 to 3 new consequences.
-Output JSON strictly in the following format:
+### TASK
+Identify 2-3 unique CONSEQUENCES that result DIRECTLY from the "SPECIFIC BRANCH" above.
+These consequences must be logical successors of "{nodeText}", not just re-statements of the effects of "{rootEvent}".
+
+### RULES
+- Output JSON strictly in the following format:
 [
   {
     "text": "description of direct effect",
     "confidence": 0.75,
-    "reasoning": "1-2 sentence reasoning explaining why",
-    "sources": [
-       { "title": "Source Name", "url": "https://example.com" }
-    ]
+    "reasoning": "Explain step-by-step how '{nodeText}' leads to this specific effect.",
+    "sources": []
   }
 ]
+- DO NOT repeat generic effects of the global event. 
+- Focus only on the unique dimension represented by the "SPECIFIC BRANCH".
 No markdown wrappers, no introductory text. Pure JSON array only.`;

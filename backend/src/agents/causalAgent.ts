@@ -6,11 +6,11 @@ export interface CausalEffect {
   confidence: number;
   reasoning: string;
   sources?: { title: string; url: string }[];
+  secondOrder?: CausalEffect[];
 }
 
 export interface CausalAgentResponse {
   firstOrder: CausalEffect[];
-  secondOrder: CausalEffect[];
 }
 
 export class CausalAgent {
@@ -49,8 +49,10 @@ export class CausalAgent {
   /**
    * Generates localized next-step consequences for a specific node in an existing graph.
    */
-  public async expandNode(nodeText: string): Promise<CausalEffect[]> {
-    const userPrompt = EXPAND_NODE_USER_PROMPT_TEMPLATE.replace('{nodeText}', nodeText);
+  public async expandNode(nodeText: string, rootEvent: string = ''): Promise<CausalEffect[]> {
+    const userPrompt = EXPAND_NODE_USER_PROMPT_TEMPLATE
+      .replace('{nodeText}', nodeText)
+      .replace('{rootEvent}', rootEvent);
     
     const responseText = await this.llmClient.generate(userPrompt, CAUSAL_SYSTEM_PROMPT);
 

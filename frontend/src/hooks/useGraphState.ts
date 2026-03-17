@@ -3,7 +3,7 @@ import { useNodesState, useEdgesState } from 'reactflow';
 import type { Node, Edge } from 'reactflow';
 import axios from 'axios';
 import { transformToGraph } from '../graph/transformToGraph';
-import type { CausalGraph } from '../graph/transformToGraph';
+import type { CausalGraph, CausalNode as GraphNode, CausalEdge as GraphEdge } from '../graph/transformToGraph';
 
 export function useGraphState() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -33,7 +33,7 @@ export function useGraphState() {
       const totalWidth = (deltaNodes.length - 1) * X_SPACING;
       const startX = currentX - (totalWidth / 2);
 
-      const positionedDeltaNodes: Node[] = deltaNodes.map((n: any, i: number) => ({
+      const positionedDeltaNodes: Node[] = deltaNodes.map((n: GraphNode, i: number) => ({
         id: n.id,
         position: { x: startX + (i * X_SPACING), y: currentY + Y_OFFSET },
         data: {
@@ -46,7 +46,7 @@ export function useGraphState() {
         type: 'causal'
       }));
 
-      const formattedDeltaEdges: Edge[] = deltaEdges.map((e: any, i: number) => ({
+      const formattedDeltaEdges: Edge[] = deltaEdges.map((e: GraphEdge, i: number) => ({
         id: `e-${e.source}-${e.target}-${i}-${Date.now()}`, // Force uniqueness for ReactFlow
         source: e.source,
         target: e.target,
