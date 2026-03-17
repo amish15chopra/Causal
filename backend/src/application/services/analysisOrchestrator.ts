@@ -1,6 +1,8 @@
 import { CausalAgent } from '../../agents/causalAgent';
 import { MarketImpactAgent } from '../../agents/marketImpactAgent';
 import { OpportunityAgent } from '../../agents/opportunityAgent';
+import { MarketImpactService } from './marketImpactService';
+import { OpportunityService } from './opportunityService';
 import { CausalGraph, CausalNode, CausalEdge } from '../../domain/models';
 import { generateNodeId } from '../../utils/hash';
 
@@ -13,12 +15,16 @@ export interface AnalysisResponse {
 export class AnalysisOrchestrator {
   private causalAgent: CausalAgent;
   private marketAgent: MarketImpactAgent;
+  private marketImpactService: MarketImpactService;
   private opportunityAgent: OpportunityAgent;
+  private opportunityService: OpportunityService;
 
   constructor() {
     this.causalAgent = new CausalAgent();
     this.marketAgent = new MarketImpactAgent();
+    this.marketImpactService = new MarketImpactService();
     this.opportunityAgent = new OpportunityAgent();
+    this.opportunityService = new OpportunityService();
   }
 
   /**
@@ -50,7 +56,8 @@ export class AnalysisOrchestrator {
         type: 'first_order_effect',
         text: fo.text,
         probability: Number(fo.confidence) || 0.5,
-        reasoning: fo.reasoning || ""
+        reasoning: fo.reasoning || "",
+        sources: fo.sources
       });
       edges.push({ source: rootId, target: foId });
 
@@ -66,7 +73,8 @@ export class AnalysisOrchestrator {
               type: 'second_order_effect',
               text: so.text,
               probability: Number(so.confidence) || 0.5,
-              reasoning: so.reasoning || ""
+              reasoning: so.reasoning || "",
+              sources: so.sources
             });
          }
          edges.push({ source: foId, target: soId });
@@ -104,26 +112,24 @@ export class AnalysisOrchestrator {
       return { event: eventText, graph, errors };
     }
 
-    // Stage 2: Market Analysis
-    try {
-      if (rawCausality) {
-         graph.marketImpacts = await this.marketAgent.analyzeImpacts(rawCausality);
+    // Stage 2: Market Analysis (routed through MarketImpactService for validation + fallback)
+    if (rawCausality) {
+      const { impacts, fallbackUsed, error } = await this.marketImpactService.getMarketImpacts(rawCausality);
+      graph.marketImpacts = impacts;
+      if (fallbackUsed && error) {
+        errors.push(`Market Impact Agent used fallback: ${error}`);
       }
-    } catch (e: any) {
-      errors.push(`Market Impact Agent Failed: ${e.message}`);
-      // Note: We purposefully do NOT return here. We yield partial graph outputs if opportunity fails.
     }
 
-    // Stage 3: Opportunity Surfacing
-    try {
-      // Only invoke the Opportunity Agent if Market Impacts successfully flowed
-      if (graph.marketImpacts && graph.marketImpacts.length > 0) {
-        graph.opportunities = await this.opportunityAgent.extractOpportunities(graph.marketImpacts);
-      } else {
-        errors.push("Opportunity Agent Skipped: Dependent Market Impacts missing.");
+    // Stage 3: Opportunity Surfacing (routed through OpportunityService for validation + fallback)
+    if (graph.marketImpacts && graph.marketImpacts.length > 0) {
+      const { opportunities, fallbackUsed, error } = await this.opportunityService.getOpportunities(graph.marketImpacts);
+      graph.opportunities = opportunities;
+      if (fallbackUsed && error) {
+        errors.push(`Opportunity Agent used fallback: ${error}`);
       }
-    } catch (e: any) {
-      errors.push(`Opportunity Agent Failed: ${e.message}`);
+    } else {
+      errors.push('Opportunity Agent Skipped: Dependent Market Impacts missing.');
     }
 
     return {
@@ -150,7 +156,8 @@ export class AnalysisOrchestrator {
         type: 'second_order_effect', // Visually grouping expanded nodes into child-tiers
         text: effect.text,
         probability: effect.confidence || 0.5,
-        reasoning: effect.reasoning || ""
+        reasoning: effect.reasoning || "",
+        sources: effect.sources
       });
       edges.push({ source: nodeId, target: effectId });
     });

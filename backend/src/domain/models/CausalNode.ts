@@ -19,4 +19,10 @@ export interface CausalNode {
   
   /** Short reasoning explaining why this node exists or follows its parent */
   reasoning: string;
+
+  /** Optional citations/sources backing the claim in this node */
+  sources?: {
+    title: string;
+    url: string;
+  }[];
 }

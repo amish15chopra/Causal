@@ -40,9 +40,10 @@ export function useGraphState() {
           label: n.text,
           probability: n.probability,
           reasoning: n.reasoning,
-          nodeType: n.type
+          nodeType: n.type,
+          sources: n.sources
         },
-        type: 'default'
+        type: 'causal'
       }));
 
       const formattedDeltaEdges: Edge[] = deltaEdges.map((e: any, i: number) => ({

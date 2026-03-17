@@ -6,6 +6,7 @@ export interface CausalNode {
   text: string;
   probability: number;
   reasoning: string;
+  sources?: { title: string; url: string }[];
 }
 
 export interface CausalEdge {
@@ -48,9 +49,10 @@ export function transformToGraph(graph: CausalGraph): { nodes: Node[], edges: Ed
           label: n.text,
           probability: n.probability,
           reasoning: n.reasoning,
-          nodeType: n.type
+          nodeType: n.type,
+          sources: n.sources
         },
-        type: 'default', // Using default for now, can be customized later
+        type: 'causal', 
       });
     });
   };

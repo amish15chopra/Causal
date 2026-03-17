@@ -1,6 +1,7 @@
-export const CAUSAL_SYSTEM_PROMPT = `You are an expert causal reasoning agent for macro events and markets. Always output valid JSON only. Use these confidence guidelines: 0.9+ = strong historical precedent, 0.7–0.9 = likely based on economic patterns, 0.4–0.7 = plausible but uncertain, <0.4 = speculative. Every effect must include 1-2 sentence reasoning.`;
+export const CAUSAL_SYSTEM_PROMPT = `You are an expert causal reasoning agent for macro events and markets. Always output valid JSON only. Use these confidence guidelines: 0.9+ = strong historical precedent, 0.7–0.9 = likely based on economic patterns, 0.4–0.7 = plausible but uncertain, <0.4 = speculative. Every effect must include 1-2 sentence reasoning. Use any provided SEARCH CONTEXT to ground your analysis in current real-world data and PROVIDE CITATIONS (source title and URL) in the "sources" field for any factual claims derived from the context.`;
 
 export const CAUSAL_USER_PROMPT_TEMPLATE = `Event: {event}
+{searchContext}
 Please analyze this macro event and break it down into causal chains.
 Output JSON strictly in the following format:
 {
@@ -8,14 +9,18 @@ Output JSON strictly in the following format:
     {
       "text": "description of direct effect",
       "confidence": 0.85,
-      "reasoning": "1-2 sentence reasoning explaining why"
+      "reasoning": "1-2 sentence reasoning explaining why",
+      "sources": [
+        { "title": "Source Name", "url": "https://example.com" }
+      ]
     }
   ],
   "secondOrder": [
     {
       "text": "description of secondary effect resulting from first order effect",
       "confidence": 0.65,
-      "reasoning": "1-2 sentence reasoning"
+      "reasoning": "1-2 sentence reasoning",
+      "sources": []
     }
   ]
 }
@@ -30,7 +35,10 @@ Output JSON strictly in the following format:
   {
     "text": "description of direct effect",
     "confidence": 0.75,
-    "reasoning": "1-2 sentence reasoning explaining why"
+    "reasoning": "1-2 sentence reasoning explaining why",
+    "sources": [
+       { "title": "Source Name", "url": "https://example.com" }
+    ]
   }
 ]
 No markdown wrappers, no introductory text. Pure JSON array only.`;

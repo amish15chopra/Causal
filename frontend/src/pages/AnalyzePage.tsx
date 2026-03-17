@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { InteractiveGraph } from '../components/InteractiveGraph';
+import { MarketImpactPanel } from '../components/MarketImpactPanel';
+import { OpportunityPanel } from '../components/OpportunityPanel';
 
 export const AnalyzePage: React.FC = () => {
   const [eventText, setEventText] = useState('');
@@ -26,7 +28,7 @@ export const AnalyzePage: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', fontFamily: 'sans-serif' }}>
+    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem', fontFamily: 'sans-serif' }}>
       <h1 style={{ color: '#0f172a' }}>Macro Event Analysis</h1>
       
       <div style={{ margin: '2rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -63,12 +65,26 @@ export const AnalyzePage: React.FC = () => {
         </div>
       )}
 
-      {/* RENDER THE INTERACTIVE GRAPH FIRST */}
+      {/* TWO-COLUMN LAYOUT: graph left, impact panel right */}
       {result && result.graph && (
         <div style={{ marginTop: '3rem' }}>
           <h2 style={{ marginBottom: '1rem', color: '#1e293b' }}>Causal Topology</h2>
-          <InteractiveGraph graphData={result.graph} />
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+            {/* Graph canvas — grows to fill remaining space */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <InteractiveGraph graphData={result.graph} />
+            </div>
+            {/* Market Impact Panel — fixed width on the right */}
+            {result.graph.marketImpacts && result.graph.marketImpacts.length > 0 && (
+              <MarketImpactPanel impacts={result.graph.marketImpacts} />
+            )}
+          </div>
         </div>
+      )}
+
+      {/* STRATEGIC OPPORTUNITIES SECTION */}
+      {result && result.graph && result.graph.opportunities && (
+        <OpportunityPanel opportunities={result.graph.opportunities} />
       )}
 
       {result && (

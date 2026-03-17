@@ -4,10 +4,15 @@ import type { Node, NodeMouseHandler } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useGraphState } from '../hooks/useGraphState';
 import type { CausalGraph } from '../graph/transformToGraph';
+import CausalNode from './CausalNode';
 
 interface InteractiveGraphProps {
   graphData: CausalGraph | null;
 }
+
+const nodeTypes = {
+  causal: CausalNode,
+};
 
 export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ graphData }) => {
   const {
@@ -58,6 +63,7 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ graphData })
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
+        nodeTypes={nodeTypes}
         fitView
         nodesDraggable={true}
         nodesConnectable={false}
