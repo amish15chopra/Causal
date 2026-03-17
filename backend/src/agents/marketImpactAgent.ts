@@ -13,9 +13,11 @@ export class MarketImpactAgent {
   /**
    * Evaluates the causal event cascade and infers the respective macro-economic sector impacts
    */
-  public async analyzeImpacts(causalData: CausalAgentResponse): Promise<MarketImpact[]> {
+  public async analyzeImpacts(causalData: CausalAgentResponse, researchContext: string = ''): Promise<MarketImpact[]> {
     const serializedChain = JSON.stringify(causalData, null, 2);
-    const userPrompt = MARKET_IMPACT_USER_PROMPT_TEMPLATE.replace('{causalChain}', serializedChain);
+    const userPrompt = MARKET_IMPACT_USER_PROMPT_TEMPLATE
+      .replace('{causalChain}', serializedChain)
+      .replace('{researchContext}', researchContext || 'No additional research available.');
 
     const responseText = await this.llmClient.generate(userPrompt, MARKET_IMPACT_SYSTEM_PROMPT);
 

@@ -20,13 +20,13 @@ export class MarketImpactService {
    * @param causalData - The resolved causal chain from CausalAgent
    * @returns Array of MarketImpact with direction, confidence, and mandatory explanation
    */
-  public async getMarketImpacts(causalData: CausalAgentResponse): Promise<{
+  public async getMarketImpacts(causalData: CausalAgentResponse, researchContext: string = ''): Promise<{
     impacts: MarketImpact[];
     fallbackUsed: boolean;
     error?: string;
   }> {
     try {
-      const impacts = await this.agent.analyzeImpacts(causalData);
+      const impacts = await this.agent.analyzeImpacts(causalData, researchContext);
 
       // Validate that each impact has all required fields
       const validated = impacts.filter(

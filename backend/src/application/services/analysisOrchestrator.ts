@@ -1,6 +1,7 @@
 import { CausalAgent } from '../../agents/causalAgent';
 import { MarketImpactAgent } from '../../agents/marketImpactAgent';
 import { OpportunityAgent } from '../../agents/opportunityAgent';
+import { ResearchAgent } from '../../agents/researchAgent';
 import { MarketImpactService } from './marketImpactService';
 import { OpportunityService } from './opportunityService';
 import { CausalGraph, CausalNode, CausalEdge } from '../../domain/models';
@@ -18,6 +19,7 @@ export class AnalysisOrchestrator {
   private marketImpactService: MarketImpactService;
   private opportunityAgent: OpportunityAgent;
   private opportunityService: OpportunityService;
+  private researchAgent: ResearchAgent;
 
   constructor() {
     this.causalAgent = new CausalAgent();
@@ -25,6 +27,7 @@ export class AnalysisOrchestrator {
     this.marketImpactService = new MarketImpactService();
     this.opportunityAgent = new OpportunityAgent();
     this.opportunityService = new OpportunityService();
+    this.researchAgent = new ResearchAgent();
   }
 
   /**
@@ -99,10 +102,22 @@ export class AnalysisOrchestrator {
       opportunities: []
     };
 
+    // Stage 0: Research (Grounding Context)
+    let researchContext = '';
+    try {
+      const research = await this.researchAgent.conductResearch(eventText);
+      researchContext = research.content;
+      if (research.research_unavailable) {
+        errors.push("Research Unavailable (Proceeding with LLM internal knowledge)");
+      }
+    } catch (e: any) {
+      errors.push(`Research System Malfunction: ${e.message}`);
+    }
+
     // Stage 1: Core Causality Generation
     let rawCausality;
     try {
-      rawCausality = await this.causalAgent.analyzeEvent(eventText);
+      rawCausality = await this.causalAgent.analyzeEvent(eventText, researchContext);
       const built = this.buildCoreGraph(eventText, rawCausality);
       graph.nodes = built.nodes;
       graph.edges = built.edges;
@@ -114,7 +129,7 @@ export class AnalysisOrchestrator {
 
     // Stage 2: Market Analysis (routed through MarketImpactService for validation + fallback)
     if (rawCausality) {
-      const { impacts, fallbackUsed, error } = await this.marketImpactService.getMarketImpacts(rawCausality);
+      const { impacts, fallbackUsed, error } = await this.marketImpactService.getMarketImpacts(rawCausality, researchContext);
       graph.marketImpacts = impacts;
       if (fallbackUsed && error) {
         errors.push(`Market Impact Agent used fallback: ${error}`);
@@ -123,7 +138,7 @@ export class AnalysisOrchestrator {
 
     // Stage 3: Opportunity Surfacing (routed through OpportunityService for validation + fallback)
     if (graph.marketImpacts && graph.marketImpacts.length > 0) {
-      const { opportunities, fallbackUsed, error } = await this.opportunityService.getOpportunities(graph.marketImpacts);
+      const { opportunities, fallbackUsed, error } = await this.opportunityService.getOpportunities(graph.marketImpacts, researchContext);
       graph.opportunities = opportunities;
       if (fallbackUsed && error) {
         errors.push(`Opportunity Agent used fallback: ${error}`);

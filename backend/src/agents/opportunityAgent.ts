@@ -13,9 +13,11 @@ export class OpportunityAgent {
   /**
    * Generates derivative execution opportunities directly dependent on the calculated market shifts
    */
-  public async extractOpportunities(impacts: MarketImpact[]): Promise<Opportunity[]> {
+  public async extractOpportunities(impacts: MarketImpact[], researchContext: string = ''): Promise<Opportunity[]> {
     const serializedImpacts = JSON.stringify(impacts, null, 2);
-    const userPrompt = OPPORTUNITY_USER_PROMPT_TEMPLATE.replace('{marketImpacts}', serializedImpacts);
+    const userPrompt = OPPORTUNITY_USER_PROMPT_TEMPLATE
+      .replace('{marketImpacts}', serializedImpacts)
+      .replace('{researchContext}', researchContext || 'No additional research available.');
 
     const responseText = await this.llmClient.generate(userPrompt, OPPORTUNITY_SYSTEM_PROMPT);
 

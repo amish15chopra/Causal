@@ -22,13 +22,13 @@ export class OpportunityService {
    * @param impacts - The validated market sector impacts from MarketImpactService
    * @returns Validated opportunities array, fallback flag, and optional error message
    */
-  public async getOpportunities(impacts: MarketImpact[]): Promise<{
+  public async getOpportunities(impacts: MarketImpact[], researchContext: string = ''): Promise<{
     opportunities: Opportunity[];
     fallbackUsed: boolean;
     error?: string;
   }> {
     try {
-      const raw = await this.agent.extractOpportunities(impacts);
+      const raw = await this.agent.extractOpportunities(impacts, researchContext);
 
       // Validate that each opportunity has all required fields and correct types
       const validated = raw.filter(

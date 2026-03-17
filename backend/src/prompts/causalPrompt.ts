@@ -11,7 +11,7 @@ Output JSON strictly in the following format:
       "confidence": 0.85,
       "reasoning": "1-2 sentence reasoning explaining why",
       "sources": [
-        { "title": "Source Name", "url": "https://example.com" }
+        { "title": "Actual Source Name from Context", "url": "https://actual-source-url.com" }
       ]
     }
   ],
