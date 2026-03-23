@@ -1,14 +1,13 @@
-import type { AgentRuntime } from '../runtime/agentRuntime';
-import { OpenAIAgentRuntime } from '../runtime/openAIAgentRuntime';
 import type { CausalGraph } from '../../domain/models';
-import type { AnalysisResponse } from '../pipeline/types';
+import type { AnalysisResponse } from '../contracts/analysis';
 import { logger } from '../../infrastructure/logging/logger';
+import { OpenAIAnalysisWorkflow } from './openAIAnalysisWorkflow';
 
 export class AnalysisOrchestrator {
-  private readonly runtime: AgentRuntime;
+  private readonly workflow: OpenAIAnalysisWorkflow;
 
-  public constructor(runtime: AgentRuntime = new OpenAIAgentRuntime()) {
-    this.runtime = runtime;
+  public constructor(workflow: OpenAIAnalysisWorkflow = new OpenAIAnalysisWorkflow()) {
+    this.workflow = workflow;
   }
 
   /**
@@ -18,7 +17,7 @@ export class AnalysisOrchestrator {
     const correlationId = `analysis-${Date.now()}`;
 
     try {
-      return this.runtime.runAnalysisWorkflow(eventText, {
+      return this.workflow.analyze(eventText, {
         correlationId,
         logger,
       });
@@ -49,7 +48,7 @@ export class AnalysisOrchestrator {
   public async expandCausalNode(nodeId: string, nodeText: string, rootEvent: string = ''): Promise<{ nodes: CausalGraph['nodes']; edges: CausalGraph['edges'] }> {
     const correlationId = `expand-${Date.now()}`;
 
-    return this.runtime.runExpansionWorkflow(nodeId, nodeText, rootEvent, {
+    return this.workflow.expandNode(nodeId, nodeText, rootEvent, {
       correlationId,
       logger,
     });

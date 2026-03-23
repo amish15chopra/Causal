@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv';
 import path from 'path';
-import type { SearchGateway } from '../../application/ports/searchGateway';
 import { logger } from '../logging/logger';
 
 // Load .env from project root
@@ -33,7 +32,7 @@ class SearchTimeoutError extends Error {
  * Singleton client for web search using Tavily.
  * Includes in-memory caching and content concentration.
  */
-export class WebSearch implements SearchGateway {
+export class WebSearch {
   private static instance: WebSearch;
   private cache: Map<string, SearchCacheEntry> = new Map();
   private readonly CACHE_TTL = 3600 * 1000; // 1 hour

@@ -1,9 +1,9 @@
-import type { CausalAgentResponse, CausalEffect } from '../../agents/causalAgent';
+import type { CausalAnalysisResult, CausalEffect } from '../contracts/analysis';
 import type { CausalEdge, CausalNode } from '../../domain/models';
 import { generateNodeId } from '../../utils/hash';
 
 export class GraphBuilder {
-  public buildCoreGraph(rootEvent: string, firstOrderPayload: CausalAgentResponse): { nodes: CausalNode[]; edges: CausalEdge[] } {
+  public buildCoreGraph(rootEvent: string, firstOrderPayload: CausalAnalysisResult): { nodes: CausalNode[]; edges: CausalEdge[] } {
     const nodes: CausalNode[] = [];
     const edges: CausalEdge[] = [];
 

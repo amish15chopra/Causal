@@ -1,5 +1,5 @@
-import { AnalysisOrchestrator } from './src/application/services/analysisOrchestrator';
-import { WebSearch } from './src/infrastructure/search/webSearch';
+import { AnalysisOrchestrator } from '../src/application/services/analysisOrchestrator';
+import { WebSearch } from '../src/infrastructure/search/webSearch';
 
 async function testResearchFlow() {
   const orchestrator = new AnalysisOrchestrator();

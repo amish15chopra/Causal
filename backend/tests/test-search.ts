@@ -1,4 +1,4 @@
-import { WebSearch } from './src/infrastructure/search/webSearch';
+import { WebSearch } from '../src/infrastructure/search/webSearch';
 
 async function testSearch() {
   const search = WebSearch.getInstance();
