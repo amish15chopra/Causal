@@ -233,28 +233,6 @@ export const AnalyzePage: React.FC = () => {
         </div>
       )}
 
-      {result && (
-        <details style={{ marginTop: '4rem' }}>
-          <summary style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500, userSelect: 'none' }}>
-            View System Diagnostics (JSON)
-          </summary>
-          <div style={{ marginTop: '1rem' }}>
-            <pre style={{ 
-              backgroundColor: 'var(--bg-secondary)', 
-              color: 'var(--text-secondary)',
-              padding: '1.5rem', 
-              borderRadius: '12px', 
-              border: '1px solid var(--border-light)',
-              overflowX: 'auto',
-              fontSize: '0.85rem',
-              lineHeight: '1.5',
-              fontFamily: 'var(--font-mono)'
-            }}>
-              {JSON.stringify(result, null, 2)}
-            </pre>
-          </div>
-        </details>
-      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { OpportunityAgent } from '../../agents/opportunityAgent';
 import type { Opportunity } from '../../domain/models/Opportunity';
 import type { MarketImpact } from '../../domain/models/MarketImpact';
+import type { PipelineContext } from '../pipeline/types';
 
 /**
  * Application service responsible for surfacing actionable investment and startup
@@ -8,11 +9,7 @@ import type { MarketImpact } from '../../domain/models/MarketImpact';
  * and enforces schema validation + graceful fallback on failure.
  */
 export class OpportunityService {
-  private agent: OpportunityAgent;
-
-  constructor() {
-    this.agent = new OpportunityAgent();
-  }
+  public constructor(private readonly agent: OpportunityAgent = new OpportunityAgent()) {}
 
   /**
    * Derives actionable opportunities from resolved market impacts.
@@ -22,13 +19,22 @@ export class OpportunityService {
    * @param impacts - The validated market sector impacts from MarketImpactService
    * @returns Validated opportunities array, fallback flag, and optional error message
    */
-  public async getOpportunities(impacts: MarketImpact[], researchContext: string = ''): Promise<{
+  public async getOpportunities(impacts: MarketImpact[], researchContext: string = '', context?: PipelineContext): Promise<{
     opportunities: Opportunity[];
     fallbackUsed: boolean;
     error?: string;
   }> {
     try {
-      const raw = await this.agent.extractOpportunities(impacts, researchContext);
+      const raw = await this.agent.execute(
+        {
+          impacts,
+          researchContext,
+        },
+        {
+          correlationId: context?.correlationId || 'standalone-opportunity-service',
+          logger: context?.logger || consoleLoggerAdapter,
+        },
+      );
 
       // Validate that each opportunity has all required fields and correct types
       const validated = raw.filter(
@@ -46,7 +52,8 @@ export class OpportunityService {
 
       return { opportunities: validated, fallbackUsed: false };
     } catch (e: any) {
-      console.warn(`⚠️ [OpportunityService] Agent failed, using fallback. Reason: ${e.message}`);
+      const logger = context?.logger || consoleLoggerAdapter;
+      logger.warn('Opportunity agent failed, using fallback', { error: e.message });
 
       // Graceful typed fallback so the graph payload is never empty
       const fallback: Opportunity[] = [
@@ -63,3 +70,10 @@ export class OpportunityService {
     }
   }
 }
+
+const consoleLoggerAdapter = {
+  debug: (message: string, metadata?: Record<string, unknown>) => console.debug(message, metadata),
+  info: (message: string, metadata?: Record<string, unknown>) => console.info(message, metadata),
+  warn: (message: string, metadata?: Record<string, unknown>) => console.warn(message, metadata),
+  error: (message: string, metadata?: Record<string, unknown>) => console.error(message, metadata),
+};

@@ -31,15 +31,17 @@ For each sector, include:
 FALLBACK RULE: If no external research is available, use historical economic patterns and general financial knowledge. Never return an empty array.
 
 Output JSON strictly in the following format:
-[
-  {
-    "sector": "Real Estate",
-    "direction": "negative",
-    "confidence": 0.82,
-    "explanation": "Rising rates directly increase mortgage costs, suppressing demand. Historical rate hike cycles consistently show 10-25% housing volume drops within 6 months."
-  }
-]
-No markdown wrappers, no introductory text. Pure JSON array only.`;
+{
+  "impacts": [
+    {
+      "sector": "Real Estate",
+      "direction": "negative",
+      "confidence": 0.82,
+      "explanation": "Rising rates directly increase mortgage costs, suppressing demand. Historical rate hike cycles consistently show 10-25% housing volume drops within 6 months."
+    }
+  ]
+}
+No markdown wrappers, no introductory text. Pure JSON object only.`;
 
 export const OPPORTUNITY_SYSTEM_PROMPT = `You are a top-tier venture capitalist and hedge fund analyst.
 Your task is to extract highly actionable strategic opportunities (startup concepts or investments) grounded in the provided market sector impacts.
@@ -77,16 +79,18 @@ For each opportunity, include:
 FALLBACK RULE: If market impact data is sparse, reason from historical economic analogues. Never refuse. Never return an empty array.
 
 Output JSON strictly in the following format:
-[
-  {
-    "type": "investment",
-    "title": "Long USD / Short EM Currency Basket",
-    "description": "A meaningful Fed rate hike relative to other central banks creates structural USD strengthening pressure via interest rate differentials and capital flow reversals into US Treasuries.",
-    "confidence": 0.78,
-    "rationale": "1. Fed hikes 50bps → 2. Rate differential vs EM widens → 3. Capital flows reverse into USD-denominated assets → 4. EM currencies depreciate systematically → 5. Short EM FX basket vs long USD is historically validated during aggressive Fed tightening cycles."
-  }
-]
-No markdown wrappers, no introductory text. Pure JSON array only.`;
+{
+  "opportunities": [
+    {
+      "type": "investment",
+      "title": "Long USD / Short EM Currency Basket",
+      "description": "A meaningful Fed rate hike relative to other central banks creates structural USD strengthening pressure via interest rate differentials and capital flow reversals into US Treasuries.",
+      "confidence": 0.78,
+      "rationale": "1. Fed hikes 50bps -> 2. Rate differential vs EM widens -> 3. Capital flows reverse into USD-denominated assets -> 4. EM currencies depreciate systematically -> 5. Short EM FX basket vs long USD is historically validated during aggressive Fed tightening cycles."
+    }
+  ]
+}
+No markdown wrappers, no introductory text. Pure JSON object only.`;
 
 export const RESEARCH_SUMMARIZATION_PROMPT = `You are a senior research analyst. Your goal is to synthesize raw web search results into a concise, high-density briefing for downstream causal analysis agents.
 
@@ -102,4 +106,16 @@ export const RESEARCH_USER_PROMPT_TEMPLATE = `EVENT: {event}
 RAW SEARCH RESULTS:
 {rawResults}
 
-Please provide a concise research briefing with numeric citations [n]. Output text only.`;
+Please provide a concise research briefing with numeric citations [n].
+
+Output JSON strictly in the following format:
+{
+  "content": "Concise research briefing with inline numeric citations [1], [2], etc.",
+  "sourceCount": 3,
+  "research_unavailable": false
+}
+
+RULES:
+1. Set "sourceCount" to the number of usable sources in the raw results.
+2. Set "research_unavailable" to false when the raw results contain usable source material.
+3. No markdown wrappers, no introductory text. Pure JSON object only.`;

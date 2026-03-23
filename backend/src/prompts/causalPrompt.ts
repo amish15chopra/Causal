@@ -32,14 +32,17 @@ These consequences must be logical successors of "{nodeText}", not just re-state
 
 ### RULES
 - Output JSON strictly in the following format:
-[
-  {
-    "text": "description of direct effect",
-    "confidence": 0.75,
-    "reasoning": "Explain step-by-step how '{nodeText}' leads to this specific effect.",
-    "sources": []
-  }
-]
+{
+  "effects": [
+    {
+      "text": "description of direct effect",
+      "confidence": 0.75,
+      "reasoning": "Explain step-by-step how '{nodeText}' leads to this specific effect.",
+      "sources": [],
+      "secondOrder": []
+    }
+  ]
+}
 - DO NOT repeat generic effects of the global event. 
 - Focus only on the unique dimension represented by the "SPECIFIC BRANCH".
-No markdown wrappers, no introductory text. Pure JSON array only.`;
+No markdown wrappers, no introductory text. Pure JSON object only.`;

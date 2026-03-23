@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import type { LLMGateway } from '../../application/ports/llmGateway';
+import { logger } from '../logging/logger';
 import { openRouterClient, DEFAULT_MODEL } from './openRouterClient';
 
 interface CacheEntry {
@@ -14,7 +16,7 @@ interface CacheEntry {
  * - Simple 30-min In-Memory cache
  * - Simple In-Memory rate limiter (10 req / min)
  */
-export class LLMClient {
+export class LLMClient implements LLMGateway {
   private static instance: LLMClient;
 
   // Rate Limiting
@@ -24,6 +26,7 @@ export class LLMClient {
   // 30 min TTL cache: hash(prompt + systemPrompt) => CacheEntry
   private cache: Map<string, CacheEntry> = new Map();
   private readonly CACHE_TTL_MS = 30 * 60 * 1000;
+  private readonly REQUEST_TIMEOUT_MS = 60 * 1000;
 
   private constructor() {}
 
@@ -78,14 +81,14 @@ export class LLMClient {
     const cachedEntry = this.cache.get(cacheKey);
 
     if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
-      console.log('⚡ [LLMClient] Serving from immediate memory cache.');
+      logger.debug('Serving LLM response from cache');
       return cachedEntry.response;
     }
 
     // 2. Check Rate Limit
     this.cleanRateLimits();
     if (this.requestTimestamps.length >= this.MAX_REQ_PER_MIN) {
-      console.warn('⚠️ [LLMClient] Rate limit exceeded (Max 10 / min).');
+      logger.warn('LLM rate limit exceeded', { maxPerMinute: this.MAX_REQ_PER_MIN });
       return 'Rate limit exceeded: The system allows a maximum of 10 insights per minute. Please try again soon.';
     }
 
@@ -95,12 +98,17 @@ export class LLMClient {
 
     while (attempt <= MAX_RETRIES) {
       try {
-        console.log(`🧠 [LLMClient] Invoking OpenRouter (Attempt ${attempt + 1})...`);
+        logger.info('Invoking LLM provider', { attempt: attempt + 1, model: DEFAULT_MODEL });
         
         // Registering timestamp for rate limit tracking
         this.requestTimestamps.push(Date.now());
-        
-        const response = await openRouterClient.chat.completions.create({
+        const timeoutError = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            reject(new Error(`LLM request timed out after ${this.REQUEST_TIMEOUT_MS / 1000}s`));
+          }, this.REQUEST_TIMEOUT_MS);
+        });
+
+        const completionRequest = openRouterClient.chat.completions.create({
           model: DEFAULT_MODEL,
           messages: [
             { role: 'system', content: defaultSystem },
@@ -108,6 +116,8 @@ export class LLMClient {
           ],
           temperature: 0.2, // Low temperature for deterministic/factual reporting
         });
+
+        const response = await Promise.race([completionRequest, timeoutError]);
 
         const output = response.choices[0]?.message?.content || '';
 
@@ -117,8 +127,12 @@ export class LLMClient {
           const approxCostPer1k = 0.0001; // Approximate standard blended rate depending on chosen model
           const totalCost = ((usage.total_tokens || 0) / 1000) * approxCostPer1k;
           
-          console.log(`📊 [LLMClient Token Analytics] Prompt: ${usage.prompt_tokens} | Completion: ${usage.completion_tokens} | Total: ${usage.total_tokens}`);
-          console.log(`💰 [LLMClient Cost] roughly ~$${totalCost.toFixed(6)} for this generation.`);
+          logger.debug('LLM token analytics', {
+            promptTokens: usage.prompt_tokens,
+            completionTokens: usage.completion_tokens,
+            totalTokens: usage.total_tokens,
+            estimatedCostUsd: Number(totalCost.toFixed(6)),
+          });
         }
 
         // Cache the result
@@ -131,7 +145,10 @@ export class LLMClient {
 
       } catch (error: any) {
         attempt++;
-        console.error(`❌ [LLMClient] Call completely failed on attempt ${attempt}:`, error.message);
+        logger.error('LLM call failed', {
+          attempt,
+          error: error.message,
+        });
         if (attempt > MAX_RETRIES) {
           throw new Error(`LLM Error: Exhausted all ${MAX_RETRIES} retries. Reason: ${error.message}`);
         }

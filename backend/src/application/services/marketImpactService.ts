@@ -1,17 +1,13 @@
 import { MarketImpactAgent } from '../../agents/marketImpactAgent';
 import type { MarketImpact } from '../../domain/models/MarketImpact';
-import type { CausalAgentResponse } from '../../agents/causalAgent';
+import type { PipelineContext } from '../pipeline/types';
 
 /**
  * Application service responsible for producing market sector impact analysis
  * from a resolved causal chain. Decouples the orchestrator from agent internals.
  */
 export class MarketImpactService {
-  private agent: MarketImpactAgent;
-
-  constructor() {
-    this.agent = new MarketImpactAgent();
-  }
+  public constructor(private readonly agent: MarketImpactAgent = new MarketImpactAgent()) {}
 
   /**
    * Accepts a resolved causal chain payload and returns calibrated sector impacts.
@@ -20,13 +16,22 @@ export class MarketImpactService {
    * @param causalData - The resolved causal chain from CausalAgent
    * @returns Array of MarketImpact with direction, confidence, and mandatory explanation
    */
-  public async getMarketImpacts(causalData: CausalAgentResponse, researchContext: string = ''): Promise<{
+  public async getMarketImpacts(causalData: unknown, researchContext: string = '', context?: PipelineContext): Promise<{
     impacts: MarketImpact[];
     fallbackUsed: boolean;
     error?: string;
   }> {
     try {
-      const impacts = await this.agent.analyzeImpacts(causalData, researchContext);
+      const impacts = await this.agent.execute(
+        {
+          causalData,
+          researchContext,
+        },
+        {
+          correlationId: context?.correlationId || 'standalone-market-impact-service',
+          logger: context?.logger || consoleLoggerAdapter,
+        },
+      );
 
       // Validate that each impact has all required fields
       const validated = impacts.filter(
@@ -43,7 +48,8 @@ export class MarketImpactService {
 
       return { impacts: validated, fallbackUsed: false };
     } catch (e: any) {
-      console.warn(`⚠️ [MarketImpactService] Agent failed, using fallback. Reason: ${e.message}`);
+      const logger = context?.logger || consoleLoggerAdapter;
+      logger.warn('Market impact agent failed, using fallback', { error: e.message });
 
       // Graceful typed fallback: surface a generic "data unavailable" impact
       // so the graph is never empty and downstream opportunity surfacing can still proceed
@@ -61,3 +67,10 @@ export class MarketImpactService {
     }
   }
 }
+
+const consoleLoggerAdapter = {
+  debug: (message: string, metadata?: Record<string, unknown>) => console.debug(message, metadata),
+  info: (message: string, metadata?: Record<string, unknown>) => console.info(message, metadata),
+  warn: (message: string, metadata?: Record<string, unknown>) => console.warn(message, metadata),
+  error: (message: string, metadata?: Record<string, unknown>) => console.error(message, metadata),
+};
